@@ -1,0 +1,58 @@
+def STAGE_TO_RUN =params.STAGE
+pipeline {
+    //agent { label 'AWS'}
+    agent any
+    environment {
+        AWS_DEFAULT_REGION = 'ap-southeast-2'
+        //TEMP_VAR = credentials('srv-ecr-usr')
+        def DOCKER_SOURCE = " "
+    }
+
+    parameters{
+        choice(name: 'ENVIRONMENT', choices: ['dev','prod'], description: 'Select the Environment Name')
+        choice(name: 'STAGE', choices: ['plan','deploy','destroy'], description: 'Terraform Stage to Apply')
+    }
+    stages {
+        stage('Download GIT Hub Repo') {
+            steps {
+                echo 'Downloading..'
+                script {
+                    git credentialsId: 'sanjayrohilla13', branch: 'master', url: 'https://github.com/sanjayrohilla13/terraform-in-docker.git', poll: false
+                }
+            }
+        }
+        stage('plan') {
+            when{expression{STAGE_TO_RUN.contains('plan')}}
+            steps {
+                echo 'Terraform Code..'
+                script {
+                    sh '''
+                    terraform version
+                    terraform init
+                    terraform plan
+                    '''
+                }
+            }
+        }
+        stage('Deploy') {
+            when{expression{STAGE_TO_RUN.contains('deploy')}}
+            steps {
+                echo 'Terraform Code..'
+                script {
+                    sh '''
+                    terraform apply --auto-approve
+                    '''
+                }
+            }
+        }
+// plan stage
+        stage('Destroy') {
+            when{expression{STAGE_TO_RUN.contains('destroy')}}
+            steps {
+                    sh '''
+                        terraform destroy --auto-approve
+                        '''
+            }  
+        }
+    }
+}
