@@ -17,7 +17,7 @@ pipeline {
             steps {
                 echo 'Downloading..'
                 script {
-                    git credentialsId: 'sanjayrohilla13', branch: 'master', url: 'https://github.com/sanjayrohilla13/terraform-in-docker.git', poll: false
+                    git credentialsId: 'sanjayrohilla13', branch: 'master', url: 'https://github.com/sanjayrohilla13/ecr-creation.git', poll: false
                 }
             }
         }
@@ -28,6 +28,7 @@ pipeline {
                 script {
                     sh '''
                     terraform version
+                    cd "${ENVIRONMENT}"
                     terraform init
                     terraform plan
                     '''
@@ -40,6 +41,8 @@ pipeline {
                 echo 'Terraform Code..'
                 script {
                     sh '''
+                    cd 
+                    cd "${ENVIRONMENT}"
                     terraform init
                     terraform apply --auto-approve
                     '''
@@ -51,6 +54,7 @@ pipeline {
             when{expression{STAGE_TO_RUN.contains('destroy')}}
             steps {
                     sh '''
+                        cd "${ENVIRONMENT}"
                         terraform destroy --auto-approve
                         '''
             }  
